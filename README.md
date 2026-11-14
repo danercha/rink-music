@@ -2,26 +2,17 @@
 
 A one-screen Spotify remote for the scorekeeper's table: a big **Play/Stop** button, **Home Goal**, **Away Goal** and **Penalty** buttons, and every song starts at the good part instead of the intro. It controls the Spotify app on your iPhone, so you need Spotify Premium (you have it) and Wi-Fi.
 
-Setup takes about 15 minutes, once. You'll do three things: put the app online (free, GitHub Pages), register it with Spotify, then sign in on your phone. Do steps 1 and 2 on a computer; it's easier.
+Setup takes about 10 minutes, once. You'll do three things: turn on the free GitHub Pages site, register the app with Spotify, then sign in on your phone. Do steps 1 and 2 on a computer; it's easier.
 
 ---
 
-## Step 1: Put the app online with GitHub Pages (free)
+## Step 1: Turn on GitHub Pages (free)
 
-1. Unzip `rink-music.zip` on your computer. You'll get a folder with about 10 files (`index.html`, `app.js`, etc.).
-2. Go to **https://github.com/new** (sign in as `danercha`).
-   - Repository name: `rink-music`
-   - Set it to **Public** (free GitHub Pages needs that; nothing private is in these files).
-   - Click **Create repository**.
-3. On the next page, click the link **"uploading an existing file"**. Drag **all the files from inside the folder** (not the folder itself) onto the page. Click **Commit changes**.
-4. In the repo, click **Settings** (top) → **Pages** (left side).
-   - Under "Build and deployment", Source: **Deploy from a branch**.
-   - Branch: **main**, folder **/ (root)** → **Save**.
-5. Wait one or two minutes, then refresh that Pages screen. It shows your address:
+The app files are already in https://github.com/danercha/rink-music.
 
-   **`https://danercha.github.io/rink-music/`**
-
-   Open it; you should see the Rink Music setup screen.
+1. In the repo, click **Settings** (top) → **Pages** (left side).
+2. Under "Build and deployment", Source: **Deploy from a branch**. Branch: **main**, folder **/ (root)** → **Save**.
+3. Wait one or two minutes, then refresh. It shows your address: **`https://danercha.github.io/rink-music/`**. Open it; you should see the Rink Music setup screen.
 
 ## Step 2: Register the app with Spotify
 
