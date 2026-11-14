@@ -170,7 +170,16 @@
     return pool.slice(0, 40).map((x) => S.tracks[x].uri);
   }
 
-  let playSeq = 0, lastCmdAt = 0;
+  let playSeq = 0, lastCmdAt = 0, shuffleOffFor = null;
+  // With Spotify's shuffle on, it starts a random song from the list instead of the one we asked
+  // for, so goal and penalty buttons would play a stoppage song. Turn shuffle off first.
+  async function ensureShuffleOff(d, force) {
+    if (!force && shuffleOffFor === d.id) return;
+    try { await api("PUT", "/me/player/shuffle?state=false&device_id=" + encodeURIComponent(d.id)); shuffleOffFor = d.id; } catch (e) {}
+  }
+  const sameTrack = (item, t) => !!item && (item.uri === t.uri || item.id === t.id ||
+    (item.linked_from && (item.linked_from.uri === t.uri || item.linked_from.id === t.id)) ||
+    (item.name === t.name && (item.artists || []).map((a) => a.name).join(", ") === t.artist));
   async function playTrack(id, kind) {
     const t = S.tracks[id];
     if (!t) { alertMsg("That song isn't in your list anymore."); return; }
@@ -180,7 +189,7 @@
     clearAlert();
     let pos = t.cueMs || 0;
     if (t.durationMs && pos > t.durationMs - 5000) pos = 0;
-    const body = { uris: [t.uri].concat(followUps(id)), position_ms: pos };
+    const body = { uris: [t.uri].concat(followUps(id)), offset: { position: 0 }, position_ms: pos };
     // optimistic UI so the button reacts instantly
     current = { id, kind }; isPlaying = true; showNow(t); setPlayBtn();
     try {
@@ -192,6 +201,7 @@
         d.is_active = true;
         await sleep(350);
       }
+      await ensureShuffleOff(d);
       try {
         await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
       } catch (e) {
@@ -224,7 +234,7 @@
       let p = null;
       try { p = await api("GET", "/me/player?additional_types=track"); } catch (e) { return; }
       if (seq !== playSeq) return;
-      const ok = p && p.is_playing && p.item && (p.item.uri === t.uri || p.item.id === t.id || body.uris.includes(p.item.uri));
+      const ok = p && p.is_playing && sameTrack(p.item, t);
       if (ok) {
         if (p.device) { device = Object.assign({}, p.device); deviceAt = Date.now(); setStatus(); }
         return;
@@ -232,17 +242,39 @@
       lastProblem = { when: new Date().toLocaleTimeString(), sent: t.name + " to " + d.name, state: p ? { is_playing: p.is_playing, device: p.device && p.device.name, track: p.item && p.item.name } : "nothing playing" };
       if (attempt === 0) {
         try {
-          await api("PUT", "/me/player", { device_ids: [d.id], play: false }).catch(() => {});
-          await sleep(400);
-          await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
+          if (!(p && p.is_playing)) {
+            await api("PUT", "/me/player", { device_ids: [d.id], play: false }).catch(() => {});
+            await sleep(400);
+          }
+          await ensureShuffleOff(d, true);
+          if (p && p.is_playing) {
+            // Spotify played a different song from the list (shuffle). Play just the one song,
+            // then queue a few more so the music still keeps going.
+            await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), { uris: [t.uri], position_ms: body.position_ms });
+            queueFollowUps(seq, d, body.uris.slice(1, 6));
+          } else {
+            await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
+          }
         } catch (e) { break; }
       }
     }
     if (seq !== playSeq) return;
     isPlaying = false; setPlayBtn(); setStatus(true);
+    if (lastProblem && lastProblem.state && lastProblem.state.is_playing) {
+      isPlaying = true; setPlayBtn(); setStatus();
+      alertMsg(`Asked Spotify for "${t.name}" but it's playing "${lastProblem.state.track}". In the Spotify app, turn off Shuffle (the crossed-arrows button), then try again.`);
+      return;
+    }
     alertMsg(`Spotify took the command but nothing is playing on "${d.name}". Open the Spotify app on your phone, tap play on any song, come back here and press Play again. Also check your phone volume.`);
   }
   let lastProblem = null;
+  async function queueFollowUps(seq, d, uris) {
+    await sleep(800);
+    for (const u of uris) {
+      if (seq !== playSeq) return;
+      await api("POST", "/me/player/queue?uri=" + encodeURIComponent(u) + "&device_id=" + encodeURIComponent(d.id)).catch(() => {});
+    }
+  }
 
   function playError(e) {
     lastProblem = { when: new Date().toLocaleTimeString(), error: e.message, status: e.status, reason: e.reason };
