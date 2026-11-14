@@ -142,68 +142,131 @@
     const j = await api("GET", "/me/player/devices");
     return (j && j.devices) || [];
   }
+  let deviceAt = 0;
   async function pickDevice() {
     const list = await getDevices();
+    lastDevices = list;
     let d = (S.settings.deviceId && list.find((x) => x.id === S.settings.deviceId))
-      || list.find((x) => x.is_active)
+      || list.find((x) => /smartphone/i.test(x.type) && x.is_active)
       || list.find((x) => /smartphone/i.test(x.type))
+      || list.find((x) => x.is_active)
       || list[0] || null;
-    device = d;
-    setStatus();
-    return d;
+    device = d ? Object.assign({}, d) : null;
+    deviceAt = Date.now();
+    setStatus(!d);
+    return device;
   }
+  let lastDevices = [];
 
   // ---------- playback ----------
   let current = null;   // {id, kind}
   let isPlaying = false;
   let fadeToken = 0;
 
+  // Songs to keep playing after the chosen one, so music never stops until Stop is pressed.
+  function followUps(firstId) {
+    const pool = S.pools.stoppage.filter((x) => S.tracks[x] && x !== firstId);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    return pool.slice(0, 40).map((x) => S.tracks[x].uri);
+  }
+
+  let playSeq = 0, lastCmdAt = 0;
   async function playTrack(id, kind) {
     const t = S.tracks[id];
-    if (!t) { toast("That song isn't in your list anymore.", true); return; }
+    if (!t) { alertMsg("That song isn't in your list anymore."); return; }
     fadeToken++; // cancel any fade in progress
+    const seq = ++playSeq;
+    lastCmdAt = Date.now();
+    clearAlert();
     let pos = t.cueMs || 0;
     if (t.durationMs && pos > t.durationMs - 5000) pos = 0;
-    const body = { uris: [t.uri], position_ms: pos };
+    const body = { uris: [t.uri].concat(followUps(id)), position_ms: pos };
+    // optimistic UI so the button reacts instantly
+    current = { id, kind }; isPlaying = true; showNow(t); setPlayBtn();
     try {
-      let d = device;
-      if (!d) d = await pickDevice();
-      try {
-        await api("PUT", "/me/player/play" + (d ? "?device_id=" + encodeURIComponent(d.id) : ""), body);
-      } catch (e) {
-        if (e.status === 404 || e.status === 502) {
-          // device went to sleep or changed: look again and retry once
-          d = await pickDevice();
-          if (!d) throw Object.assign(new Error("no device"), { noDevice: true });
-          await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
-        } else throw e;
+      let d = (device && Date.now() - deviceAt < 30000) ? device : await pickDevice();
+      if (!d) throw Object.assign(new Error("no device"), { noDevice: true });
+      if (!d.is_active) {
+        // wake the phone up as the Spotify player first; playing to an idle device often does nothing
+        await api("PUT", "/me/player", { device_ids: [d.id], play: false }).catch(() => {});
+        d.is_active = true;
+        await sleep(350);
       }
-      if (d && d.volume_percent != null && restoreVol != null && d.supports_volume) {
-        // a previous fade left the volume down; put it back
+      try {
+        await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
+      } catch (e) {
+        if (e.status !== 404 && e.status !== 502 && e.status !== 503) throw e;
+        d = await pickDevice();
+        if (!d) throw Object.assign(new Error("no device"), { noDevice: true });
+        await api("PUT", "/me/player", { device_ids: [d.id], play: false }).catch(() => {});
+        await sleep(500);
+        await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
+      }
+      if (restoreVol != null && d.supports_volume) {
         api("PUT", "/me/player/volume?volume_percent=" + restoreVol + "&device_id=" + encodeURIComponent(d.id)).catch(() => {});
         restoreVol = null;
       }
-      current = { id, kind };
-      isPlaying = true;
-      showNow(t);
-      setPlayBtn();
-    } catch (e) { playError(e); }
+      setStatus();
+      verifyPlaying(seq, t, d, body);
+    } catch (e) {
+      if (seq !== playSeq) return;
+      isPlaying = false; setPlayBtn();
+      playError(e);
+    }
   }
 
+  // Spotify can accept the command and still play nothing (usually: the Spotify app on the
+  // phone was asleep). Check, retry once, and say so on screen instead of failing silently.
+  async function verifyPlaying(seq, t, d, body) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await sleep(1500);
+      if (seq !== playSeq) return;
+      let p = null;
+      try { p = await api("GET", "/me/player?additional_types=track"); } catch (e) { return; }
+      if (seq !== playSeq) return;
+      const ok = p && p.is_playing && p.item && (p.item.uri === t.uri || p.item.id === t.id || body.uris.includes(p.item.uri));
+      if (ok) {
+        if (p.device) { device = Object.assign({}, p.device); deviceAt = Date.now(); setStatus(); }
+        return;
+      }
+      lastProblem = { when: new Date().toLocaleTimeString(), sent: t.name + " to " + d.name, state: p ? { is_playing: p.is_playing, device: p.device && p.device.name, track: p.item && p.item.name } : "nothing playing" };
+      if (attempt === 0) {
+        try {
+          await api("PUT", "/me/player", { device_ids: [d.id], play: false }).catch(() => {});
+          await sleep(400);
+          await api("PUT", "/me/player/play?device_id=" + encodeURIComponent(d.id), body);
+        } catch (e) { break; }
+      }
+    }
+    if (seq !== playSeq) return;
+    isPlaying = false; setPlayBtn(); setStatus(true);
+    alertMsg(`Spotify took the command but nothing is playing on "${d.name}". Open the Spotify app on your phone, tap play on any song, come back here and press Play again. Also check your phone volume.`);
+  }
+  let lastProblem = null;
+
   function playError(e) {
+    lastProblem = { when: new Date().toLocaleTimeString(), error: e.message, status: e.status, reason: e.reason };
     if (e.noDevice || e.reason === "NO_ACTIVE_DEVICE" || e.status === 404) {
-      toast("Spotify isn't awake on your phone. Open the Spotify app, play any song for a second, then come back.", true, 7000);
+      alertMsg("Spotify can't find your phone. Open the Spotify app, play any song for a second, then come back and press Play again.");
     } else if (e.reason === "PREMIUM_REQUIRED" || e.status === 403) {
-      toast("Spotify refused: " + e.message + ". (Remote control needs Premium.)", true, 7000);
+      alertMsg("Spotify refused to play: " + e.message + (e.reason ? " (" + e.reason + ")" : "") + ". Make sure you're signed in with your Premium account.");
     } else if (e.status === 429) {
-      toast("Spotify says slow down. Wait a few seconds.", true);
-    } else toast(e.message || "Something went wrong.", true);
+      alertMsg("Spotify says slow down. Wait a few seconds and try again.");
+    } else alertMsg("Spotify error: " + (e.message || "something went wrong") + (e.status ? " (" + e.status + ")" : ""));
     setStatus(true);
   }
+  function alertMsg(text) {
+    const el = $("alert");
+    if (!el) return toast(text, true, 8000);
+    el.querySelector("span").textContent = text;
+    el.classList.remove("hidden");
+  }
+  function clearAlert() { const el = $("alert"); if (el) el.classList.add("hidden"); }
 
   let restoreVol = null;
   async function stop() {
     const my = ++fadeToken;
+    playSeq++; lastCmdAt = Date.now(); clearAlert();
     const fadeMs = +S.settings.fadeMs || 0;
     isPlaying = false; setPlayBtn();
     try {
@@ -277,17 +340,17 @@
   async function onPlay() {
     if (isPlaying) return stop();
     const id = nextStoppage();
-    if (!id) { toast("No stoppage songs yet. Add some under Songs & settings.", true); return; }
+    if (!id) { alertMsg("There are no songs in the Stoppage list, so there's nothing to play. Open Songs & settings and add some, or tap Settings → Re-add the starter songs."); return; }
     playTrack(id, "stoppage");
   }
   function onGoal(side) {
     const id = S.goals[side];
-    if (!id) { toast(`No ${side} goal song set. Pick one under Songs & settings → + Add songs.`, true); return; }
+    if (!id) { alertMsg(`No ${side} goal song is set. Pick one under Songs & settings → + Add songs.`); return; }
     playTrack(id, side);
   }
   function onPenalty() {
     const id = nextPenalty();
-    if (!id) { toast("No penalty songs yet.", true); return; }
+    if (!id) { alertMsg("There are no songs in the Penalty list yet. Add some under Songs & settings."); return; }
     playTrack(id, "penalty");
   }
   function onSkip() {
@@ -318,10 +381,11 @@
   // poll now-playing so the label and button stay honest if Spotify was changed elsewhere
   async function poll() {
     if (document.hidden || $("main").classList.contains("hidden") || !S.tokens) return;
+    if (Date.now() - lastCmdAt < 5000) return; // don't fight a command that's still landing
     try {
       const p = await api("GET", "/me/player?additional_types=track");
       if (!p) { if (isPlaying) { isPlaying = false; setPlayBtn(); } return; }
-      if (p.device) { device = Object.assign(device || {}, p.device); setStatus(); }
+      if (p.device && device && p.device.id === device.id) { Object.assign(device, p.device); setStatus(); }
       isPlaying = !!p.is_playing; setPlayBtn();
       if (p.item) {
         const t = S.tracks[p.item.id] || { name: p.item.name, artist: (p.item.artists || []).map((a) => a.name).join(", ") };
@@ -470,7 +534,8 @@
         const norm = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
         const want = norm(s.title);
         const it = items.find((t) => !t.explicit && norm(t.name).startsWith(want) && !/live|remix|karaoke|instrumental/i.test(t.name))
-          || items.find((t) => !t.explicit && norm(t.name).includes(want));
+          || items.find((t) => !t.explicit && norm(t.name).includes(want))
+          || items.find((t) => !t.explicit);
         if (!it) { missed.push(s.title); continue; }
         const t = addTrack(it);
         if (!t.cueMs) t.cueMs = parseCue(s.cue) || 0;
@@ -496,6 +561,23 @@
       sel.value = list.some((d) => d.id === S.settings.deviceId) ? S.settings.deviceId : "";
       if (!list.length) toast("No devices. Open the Spotify app, play a song for a second, then refresh.", true, 6000);
     } catch (e) { playError(e); }
+  }
+  async function testConnection() {
+    const out = $("diagOut");
+    out.classList.remove("hidden");
+    out.textContent = "Checking…";
+    const lines = [];
+    try {
+      const list = await getDevices();
+      lines.push("Spotify devices I can see:");
+      if (!list.length) lines.push("  (none — open the Spotify app on your phone and play something)");
+      list.forEach((d) => lines.push(`  ${d.is_active ? "▶" : "•"} ${d.name} [${d.type}]${d.is_restricted ? " RESTRICTED" : ""}${d.supports_volume ? "" : " no-volume"}`));
+      const p = await api("GET", "/me/player?additional_types=track");
+      lines.push("", "Spotify right now:");
+      lines.push(p ? `  ${p.is_playing ? "playing" : "paused"}: ${p.item ? p.item.name : "(no track)"} on ${p.device ? p.device.name : "?"}` : "  nothing active");
+    } catch (e) { lines.push("Error talking to Spotify: " + e.message + (e.status ? " (" + e.status + ")" : "")); }
+    if (lastProblem) lines.push("", "Last problem: " + JSON.stringify(lastProblem));
+    out.textContent = lines.join("\n");
   }
   function backupText() { return btoa(unescape(encodeURIComponent(JSON.stringify(S)))); }
   function restore(text) {
@@ -556,6 +638,8 @@
 
     $("deviceSelect").onchange = (e) => { S.settings.deviceId = e.target.value; device = null; save(); pickDevice().catch(() => {}); };
     $("refreshDevices").onclick = refreshDevices;
+    $("diagBtn").onclick = testConnection;
+    $("alert").onclick = clearAlert;
     $("fadeSelect").onchange = (e) => { S.settings.fadeMs = +e.target.value; save(); };
     $("wakeChk").onchange = (e) => { S.settings.wake = e.target.checked; save(); if (S.settings.wake) wake(); else if (wakeLock) wakeLock.release(); };
     $("backupBtn").onclick = async () => {

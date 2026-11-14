@@ -71,6 +71,10 @@
   .mark{flex:none;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13.5px;font-weight:600;white-space:nowrap}
   .mark b{color:var(--gold)}
 
+  .alert{background:#2a0505;border:1px solid var(--red-hi);color:#ffd9d9;border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:14.5px;line-height:1.4;box-shadow:0 0 24px -6px rgba(255,42,42,.6)}
+  .alert em{display:block;font-style:normal;font-size:12px;color:#ff9a9a;margin-top:6px}
+  .diag{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;font:12.5px/1.45 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;margin:0}
+
   /* ---------- controls ---------- */
   #main{height:100vh;height:100dvh;min-height:0}
   .controls{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1.7fr) minmax(0,1fr) minmax(0,.72fr) auto;gap:12px}
@@ -189,6 +193,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
   </div>
+  <div id="alert" class="alert hidden" role="alert"><span></span><em>Tap to dismiss</em></div>
   <div class="now">
     <div class="eq" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="t"><div class="n" id="nowName">Nothing playing</div><div class="a" id="nowArtist">&nbsp;</div></div>
@@ -260,6 +265,8 @@
       <b>Speaker / device</b>
       <select id="deviceSelect"><option value="">Automatic (this phone)</option></select>
       <button class="btn sec" id="refreshDevices">Refresh device list</button>
+      <button class="btn sec" id="diagBtn">Test connection</button>
+      <pre id="diagOut" class="diag hidden"></pre>
       <p class="muted" style="margin:0">If nothing shows up, open the Spotify app, play any song for a second, then come back and refresh.</p>
     </div>
     <div class="card stack">
