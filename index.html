@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rink Music">
+<meta name="theme-color" content="#0e1420">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Rink Music</title>
+<style>
+  :root{
+    --bg:#0e1420; --panel:#172033; --panel2:#1f2a40; --text:#eef2f8; --muted:#8d9ab3;
+    --green:#16a34a; --red:#dc2626; --blue:#2563eb; --gray:#475569; --orange:#ea580c; --line:#2a3650;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font:16px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  body{overscroll-behavior:none}
+  .screen{padding-top:calc(12px + env(safe-area-inset-top))!important;padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
+  button{font:inherit;color:inherit;border:0;border-radius:14px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+  button:active{transform:scale(.97);filter:brightness(1.15)}
+  button:disabled{opacity:.4}
+  input,select{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+  .hidden{display:none!important}
+  .screen{display:flex;flex-direction:column;min-height:100%;padding:12px 16px}
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:10px;padding-bottom:10px}
+  .status{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status b{color:var(--text);font-weight:600}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gray);margin-right:6px;vertical-align:1px}
+  .dot.ok{background:#22c55e}.dot.bad{background:#ef4444}
+  .icon-btn{background:var(--panel);padding:10px 14px;font-size:15px}
+
+  /* main controls */
+  .now{background:var(--panel);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:58px}
+  .now .t{flex:1;min-width:0}
+  .now .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .now .t .n{font-weight:600}.now .t .a{font-size:13px;color:var(--muted)}
+  .mark{background:var(--panel2);padding:10px 12px;font-size:14px;white-space:nowrap}
+  #main{height:100vh;height:100dvh;min-height:0}
+  .controls{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.75fr) auto;gap:12px}
+  .big{font-size:44px;font-weight:800;letter-spacing:1px;background:var(--green);border-radius:22px}
+  .big.stop{background:var(--red)}
+  .big small{display:block;font-size:14px;font-weight:500;letter-spacing:0;opacity:.85;margin-top:4px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .goal{font-size:24px;font-weight:800;border-radius:18px}
+  .home{background:var(--blue)}.away{background:var(--gray)}
+  .pen{font-size:24px;font-weight:800;background:var(--orange);border-radius:18px}
+  .mini{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mini button{background:var(--panel);padding:14px;font-size:15px}
+
+  /* library */
+  h2{font-size:18px;margin:18px 0 8px}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin:0 -16px;padding-left:16px;padding-right:16px}
+  .tabs button{background:var(--panel);padding:9px 14px;font-size:14px;white-space:nowrap;border-radius:999px}
+  .tabs button.on{background:var(--text);color:var(--bg)}
+  .list{display:flex;flex-direction:column;gap:6px}
+  .item{background:var(--panel);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+  .item .t{flex:1;min-width:0}
+  .item .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .t .a{font-size:13px;color:var(--muted)}
+  .item input.cue{width:64px;padding:7px 6px;text-align:center;font-size:14px}
+  .item button{background:var(--panel2);padding:8px 10px;font-size:13px;white-space:nowrap}
+  .item .acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:52%}
+  .muted{color:var(--muted);font-size:14px}
+  .card{background:var(--panel);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card p{margin:0 0 10px}
+  .btn{background:var(--blue);padding:12px 16px;font-weight:600}
+  .btn.sec{background:var(--panel2)}
+  .btn.danger{background:var(--red)}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .inline{display:flex;gap:8px}
+  .inline input{flex:1}
+  code.copy{display:block;background:var(--panel2);padding:10px;border-radius:10px;word-break:break-all;font-size:14px;user-select:all;-webkit-user-select:all}
+  textarea{font:13px ui-monospace,monospace;width:100%;min-height:90px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .goalslot{display:flex;align-items:center;gap:10px}
+  .tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px}
+
+  #toast{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top));background:#f8fafc;color:#0f172a;
+    padding:12px 14px;border-radius:12px;font-size:15px;box-shadow:0 8px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(-20px);
+    transition:.2s;pointer-events:none;z-index:9}
+  #toast.show{opacity:1;transform:none}
+  #toast.err{background:#fee2e2;color:#7f1d1d}
+</style>
+</head>
+<body>
+
+<!-- SETUP / LOGIN -->
+<section id="setup" class="screen hidden">
+  <h1 style="margin:8px 0 4px">Rink Music</h1>
+  <p class="muted" style="margin-top:0">One-time setup. Takes about five minutes.</p>
+  <div class="card stack">
+    <p><b>Step 1.</b> In your Spotify developer app, add this exact Redirect URI:</p>
+    <code class="copy" id="redirectShow"></code>
+    <p style="margin:0"><b>Step 2.</b> Paste your app's Client ID here:</p>
+    <input id="clientIdInput" placeholder="Client ID (32 letters and numbers)" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="btn" id="loginBtn">Connect Spotify</button>
+  </div>
+  <p class="muted">Already set up on another screen? <a href="#" id="setupRestore" style="color:#93c5fd">Paste a backup</a> instead.</p>
+  <div id="setupRestoreBox" class="card stack hidden">
+    <textarea id="setupRestoreText" placeholder="Paste backup text here"></textarea>
+    <button class="btn" id="setupRestoreBtn">Restore</button>
+  </div>
+</section>
+
+<!-- MAIN CONTROLLER -->
+<section id="main" class="screen hidden">
+  <div class="top">
+    <div class="status" id="status"><span class="dot"></span>Starting…</div>
+    <button class="icon-btn" id="openLib">Songs &amp; settings</button>
+  </div>
+  <div class="now">
+    <div class="t"><div class="n" id="nowName">Nothing playing</div><div class="a" id="nowArtist">&nbsp;</div></div>
+    <button class="mark" id="markBtn">Mark cue here</button>
+  </div>
+  <div class="controls">
+    <button class="big" id="playBtn">PLAY<small>random stoppage song</small></button>
+    <div class="row">
+      <button class="goal home" id="homeBtn">HOME<br>GOAL</button>
+      <button class="goal away" id="awayBtn">AWAY<br>GOAL</button>
+    </div>
+    <button class="pen" id="penBtn">PENALTY</button>
+    <div class="mini">
+      <button id="skipBtn">Next song ⏭</button>
+      <button id="replayBtn">Restart at cue ↺</button>
+    </div>
+  </div>
+</section>
+
+<!-- LIBRARY / SETTINGS -->
+<section id="lib" class="screen hidden">
+  <div class="top">
+    <button class="icon-btn" id="closeLib">← Back</button>
+    <div class="status" style="text-align:right">Songs &amp; settings</div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-tab="stoppage" class="on">Stoppage</button>
+    <button data-tab="penalty">Penalty</button>
+    <button data-tab="goals">Goals</button>
+    <button data-tab="add">+ Add songs</button>
+    <button data-tab="settings">Settings</button>
+  </div>
+
+  <div id="tab-stoppage" class="tab">
+    <p class="muted">Play picks randomly from these. Cue = where the song starts (m:ss). Tap ▶ to hear it from the cue.</p>
+    <div class="list" id="list-stoppage"></div>
+  </div>
+
+  <div id="tab-penalty" class="tab hidden">
+    <p class="muted">Penalty rotates through these in order.</p>
+    <div class="list" id="list-penalty"></div>
+  </div>
+
+  <div id="tab-goals" class="tab hidden">
+    <h2>Home goal</h2><div class="list" id="goal-home"></div>
+    <h2>Away goal</h2><div class="list" id="goal-away"></div>
+    <p class="muted">To change a goal song, find it under "+ Add songs" and tap Home or Away.</p>
+  </div>
+
+  <div id="tab-add" class="tab hidden">
+    <div class="inline"><input id="searchInput" placeholder="Search Spotify (song, artist)" enterkeyhint="search"><button class="btn" id="searchBtn">Search</button></div>
+    <p class="muted" id="searchNote">Explicit songs are hidden automatically.</p>
+    <div class="list" id="searchResults"></div>
+    <h2>Import a playlist</h2>
+    <p class="muted">Paste a Spotify playlist link (Share → Copy link). Explicit songs are skipped. Works with playlists you own.</p>
+    <div class="stack">
+      <input id="plInput" placeholder="https://open.spotify.com/playlist/…" autocapitalize="off">
+      <div class="inline">
+        <button class="btn sec" id="plStop" style="flex:1">Add to Stoppage</button>
+        <button class="btn sec" id="plPen" style="flex:1">Add to Penalty</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-settings" class="tab hidden">
+    <div class="card stack">
+      <b>Speaker / device</b>
+      <select id="deviceSelect"><option value="">Automatic (this phone)</option></select>
+      <button class="btn sec" id="refreshDevices">Refresh device list</button>
+      <p class="muted" style="margin:0">If nothing shows up: open the Spotify app, play any song for a second, then come back and refresh.</p>
+    </div>
+    <div class="card stack">
+      <b>Stop button</b>
+      <label class="muted">Fade-out length (seconds). Only works on speakers that allow volume control; iPhones usually just pause.</label>
+      <select id="fadeSelect"><option value="0">No fade</option><option value="1000">1 second</option><option value="1500">1.5 seconds</option><option value="2500">2.5 seconds</option></select>
+      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="wakeChk" style="width:auto"> Keep screen awake while open</label>
+    </div>
+    <div class="card stack">
+      <b>Backup</b>
+      <p class="muted" style="margin:0">Copies all your songs, cues and your login. Paste it into the home-screen app or a new phone to move everything over.</p>
+      <button class="btn sec" id="backupBtn">Copy backup</button>
+      <textarea id="restoreText" placeholder="Paste backup text here to restore"></textarea>
+      <button class="btn sec" id="restoreBtn">Restore from pasted backup</button>
+    </div>
+    <div class="card stack">
+      <b>Account</b>
+      <p class="muted" style="margin:0" id="clientIdShow"></p>
+      <button class="btn sec" id="reseedBtn">Re-add the starter songs</button>
+      <button class="btn sec" id="logoutBtn">Sign out of Spotify</button>
+      <button class="btn danger" id="resetBtn">Erase everything</button>
+    </div>
+  </div>
+</section>
+
+<div id="toast"></div>
+<script src="songs.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
