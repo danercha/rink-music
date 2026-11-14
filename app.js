@@ -255,10 +255,13 @@
   }
 
   // ---------- main screen ----------
+  const ICON_PLAY = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
+  const ICON_STOP = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"/></svg>';
   function setPlayBtn() {
     const b = $("playBtn");
-    if (isPlaying) { b.classList.add("stop"); b.innerHTML = "STOP<small>" + (S.settings.fadeMs > 0 && device && device.supports_volume ? "fade out" : "pause") + "</small>"; }
-    else { b.classList.remove("stop"); b.innerHTML = "PLAY<small>random stoppage song</small>"; }
+    document.body.classList.toggle("playing", isPlaying);
+    if (isPlaying) { b.classList.add("stop"); b.innerHTML = ICON_STOP + "Stop<span class=\"sub\">" + (S.settings.fadeMs > 0 && device && device.supports_volume ? "fade out" : "pause the music") + "</span>"; }
+    else { b.classList.remove("stop"); b.innerHTML = ICON_PLAY + "Play<span class=\"sub\">random stoppage song</span>"; }
   }
   function showNow(t) {
     $("nowName").textContent = t ? t.name : "Nothing playing";

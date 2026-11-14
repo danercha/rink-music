@@ -6,102 +6,169 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Rink Music">
-<meta name="theme-color" content="#0e1420">
+<meta name="apple-mobile-web-app-title" content="Flames Music">
+<meta name="theme-color" content="#0b0b0d">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Rink Music</title>
+<link rel="preload" href="fonts/oswald-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<title>Flames Rink Music</title>
 <style>
+  @font-face{font-family:"Oswald";font-weight:600;font-display:swap;src:url(fonts/oswald-latin-600-normal.woff2) format("woff2")}
+  @font-face{font-family:"Oswald";font-weight:700;font-display:swap;src:url(fonts/oswald-latin-700-normal.woff2) format("woff2")}
   :root{
-    --bg:#0e1420; --panel:#172033; --panel2:#1f2a40; --text:#eef2f8; --muted:#8d9ab3;
-    --green:#16a34a; --red:#dc2626; --blue:#2563eb; --gray:#475569; --orange:#ea580c; --line:#2a3650;
+    --bg:#0b0b0d; --surface:#151518; --surface2:#1e1e23; --line:#2b2b31;
+    --text:#f5f5f4; --muted:#9a9aa3;
+    --red:#cc0000; --red-hi:#ff2a2a; --red-lo:#7a0000;
+    --gold:#ffc805; --gold-lo:#c79a00;
+    --display:"Oswald","Arial Narrow",Impact,sans-serif;
+    --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    --r:22px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-    font:16px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-  body{overscroll-behavior:none}
-  .screen{padding-top:calc(12px + env(safe-area-inset-top))!important;padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
-  button{font:inherit;color:inherit;border:0;border-radius:14px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
-  button:active{transform:scale(.97);filter:brightness(1.15)}
+  html,body{margin:0;height:100%;color:var(--text);font:16px/1.35 var(--body)}
+  body{background:var(--bg);overscroll-behavior:none}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+    background:radial-gradient(120% 55% at 50% -10%,rgba(204,0,0,.28),transparent 60%),
+               radial-gradient(80% 40% at 50% 110%,rgba(255,200,5,.07),transparent 70%)}
+  button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+    transition:transform .08s ease,filter .08s ease,box-shadow .2s ease}
+  button:active{transform:scale(.97);filter:brightness(1.12)}
   button:disabled{opacity:.4}
-  input,select{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+  input,select,textarea{font:inherit;color:var(--text);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+  a{color:var(--gold)}
   .hidden{display:none!important}
-  .screen{display:flex;flex-direction:column;min-height:100%;padding:12px 16px}
+  .screen{display:flex;flex-direction:column;min-height:100%;
+    padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom))}
 
-  /* top bar */
-  .top{display:flex;align-items:center;gap:10px;padding-bottom:10px}
-  .status{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ---------- header ---------- */
+  .top{display:flex;align-items:center;gap:12px;padding-bottom:12px}
+  .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+  .brand img{width:46px;height:46px;flex:none;filter:drop-shadow(0 0 10px rgba(204,0,0,.45))}
+  .brand .words{min-width:0}
+  .brand .title{font:700 20px/1 var(--display);letter-spacing:.06em;text-transform:uppercase}
+  .brand .title span{color:var(--gold)}
+  .status{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
   .status b{color:var(--text);font-weight:600}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gray);margin-right:6px;vertical-align:1px}
-  .dot.ok{background:#22c55e}.dot.bad{background:#ef4444}
-  .icon-btn{background:var(--panel);padding:10px 14px;font-size:15px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#55555e;margin-right:6px;vertical-align:1px}
+  .dot.ok{background:#22c55e;box-shadow:0 0 8px #22c55e}.dot.bad{background:var(--red-hi);box-shadow:0 0 8px var(--red-hi)}
+  .icon-btn{width:46px;height:46px;flex:none;border-radius:14px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
+  .icon-btn svg{width:22px;height:22px}
+  .back{height:42px;padding:0 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:15px}
 
-  /* main controls */
-  .now{background:var(--panel);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:58px}
+  /* ---------- now playing ---------- */
+  .now{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);
+    border-radius:18px;padding:10px 10px 10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:12px;min-height:62px}
+  .eq{display:flex;align-items:flex-end;gap:3px;height:22px;width:22px;flex:none}
+  .eq i{flex:1;background:var(--gold);border-radius:2px;height:20%;transition:height .3s}
+  body.playing .eq i{animation:eq 0.9s ease-in-out infinite}
+  body.playing .eq i:nth-child(2){animation-delay:-.3s}
+  body.playing .eq i:nth-child(3){animation-delay:-.6s}
+  @keyframes eq{0%,100%{height:25%}50%{height:100%}}
   .now .t{flex:1;min-width:0}
   .now .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .now .t .n{font-weight:600}.now .t .a{font-size:13px;color:var(--muted)}
-  .mark{background:var(--panel2);padding:10px 12px;font-size:14px;white-space:nowrap}
-  #main{height:100vh;height:100dvh;min-height:0}
-  .controls{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.75fr) auto;gap:12px}
-  .big{font-size:44px;font-weight:800;letter-spacing:1px;background:var(--green);border-radius:22px}
-  .big.stop{background:var(--red)}
-  .big small{display:block;font-size:14px;font-weight:500;letter-spacing:0;opacity:.85;margin-top:4px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .goal{font-size:24px;font-weight:800;border-radius:18px}
-  .home{background:var(--blue)}.away{background:var(--gray)}
-  .pen{font-size:24px;font-weight:800;background:var(--orange);border-radius:18px}
-  .mini{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .mini button{background:var(--panel);padding:14px;font-size:15px}
+  .now .t .n{font-weight:650;font-size:16px}.now .t .a{font-size:13px;color:var(--muted)}
+  .mark{flex:none;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13.5px;font-weight:600;white-space:nowrap}
+  .mark b{color:var(--gold)}
 
-  /* library */
-  h2{font-size:18px;margin:18px 0 8px}
-  .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin:0 -16px;padding-left:16px;padding-right:16px}
-  .tabs button{background:var(--panel);padding:9px 14px;font-size:14px;white-space:nowrap;border-radius:999px}
-  .tabs button.on{background:var(--text);color:var(--bg)}
-  .list{display:flex;flex-direction:column;gap:6px}
-  .item{background:var(--panel);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+  /* ---------- controls ---------- */
+  #main{height:100vh;height:100dvh;min-height:0}
+  .controls{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1.7fr) minmax(0,1fr) minmax(0,.72fr) auto;gap:12px}
+  .btn-xl{position:relative;border-radius:var(--r);font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+  /* neon inline, borrowed from the logo lettering */
+  .btn-xl::after{content:"";position:absolute;inset:7px;border-radius:calc(var(--r) - 6px);border:2px solid rgba(255,200,5,.85);pointer-events:none}
+  .btn-xl .sub{font:600 13px/1 var(--body);letter-spacing:.02em;text-transform:none;margin-top:10px;opacity:.85}
+
+  .big{font-size:64px;color:#1a0500;
+    background:linear-gradient(170deg,#ffd84a 0%,var(--gold) 28%,#ff8a00 58%,var(--red) 100%);
+    box-shadow:0 10px 40px -10px rgba(255,120,0,.55),inset 0 1px 0 rgba(255,255,255,.5)}
+  .big::after{border-color:rgba(26,5,0,.55)}
+  .big .ico{width:44px;height:44px;margin-bottom:6px}
+  .big.stop{color:#fff;background:radial-gradient(120% 90% at 50% 0%,#2a0606,#120202 70%);
+    box-shadow:0 0 0 2px var(--red),0 0 34px rgba(255,30,30,.45),inset 0 0 40px rgba(204,0,0,.35);animation:glow 1.6s ease-in-out infinite}
+  .big.stop::after{border-color:rgba(255,42,42,.9)}
+  @keyframes glow{50%{box-shadow:0 0 0 2px var(--red-hi),0 0 50px rgba(255,30,30,.65),inset 0 0 50px rgba(204,0,0,.5)}}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .goal{font-size:30px}
+  .goal small{display:block;font-size:15px;letter-spacing:.18em;opacity:.8;margin-bottom:4px}
+  .home{color:#fff;background:linear-gradient(180deg,var(--red-hi),var(--red) 45%,var(--red-lo));box-shadow:0 10px 30px -12px rgba(204,0,0,.8)}
+  .away{color:#e7e7ea;background:linear-gradient(180deg,#2a2a30,#18181c);box-shadow:inset 0 0 0 1px #3a3a42}
+  .away::after{border-color:rgba(255,255,255,.22)}
+  .pen{font-size:28px;color:var(--gold);background:linear-gradient(180deg,#1c1705,#100d03);
+    box-shadow:inset 0 0 0 1px rgba(255,200,5,.35),0 0 24px -8px rgba(255,200,5,.35);text-shadow:0 0 14px rgba(255,200,5,.55)}
+  .pen::after{border-color:rgba(255,200,5,.55)}
+  .mini{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mini button{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 10px;font-weight:600;font-size:15px;
+    display:flex;align-items:center;justify-content:center;gap:8px}
+  .mini svg{width:18px;height:18px;opacity:.85}
+
+  /* ---------- library ---------- */
+  h2{font:700 17px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;margin:22px 0 10px;color:var(--gold)}
+  .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 6px;padding:2px 16px 10px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{background:var(--surface);border:1px solid var(--line);padding:10px 15px;font-size:14px;font-weight:600;white-space:nowrap;border-radius:999px}
+  .tabs button.on{background:var(--gold);border-color:var(--gold);color:#140f00}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .item{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 10px 10px 14px;display:flex;align-items:center;gap:8px}
   .item .t{flex:1;min-width:0}
   .item .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .item .t .a{font-size:13px;color:var(--muted)}
-  .item input.cue{width:64px;padding:7px 6px;text-align:center;font-size:14px}
-  .item button{background:var(--panel2);padding:8px 10px;font-size:13px;white-space:nowrap}
-  .item .acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:52%}
+  .item input.cue{width:66px;padding:8px 6px;text-align:center;font-size:14px;font-variant-numeric:tabular-nums;border-radius:10px}
+  .item button{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13px;font-weight:600;white-space:nowrap}
+  .item button[data-act=preview]{color:var(--gold)}
+  .item .acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:56%}
+  .item .acts button[data-add=home]{background:var(--red);border-color:var(--red)}
   .muted{color:var(--muted);font-size:14px}
-  .card{background:var(--panel);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
   .card p{margin:0 0 10px}
-  .btn{background:var(--blue);padding:12px 16px;font-weight:600}
-  .btn.sec{background:var(--panel2)}
-  .btn.danger{background:var(--red)}
+  .card > b{font:700 15px/1 var(--display);letter-spacing:.08em;text-transform:uppercase}
+  .btn{background:var(--red);border-radius:12px;padding:13px 16px;font-weight:700;color:#fff}
+  .btn.sec{background:var(--surface2);border:1px solid var(--line);font-weight:600}
+  .btn.danger{background:transparent;border:1px solid var(--red);color:var(--red-hi)}
+  .btn.gold{background:var(--gold);color:#140f00}
   .stack{display:flex;flex-direction:column;gap:10px}
   .inline{display:flex;gap:8px}
   .inline input{flex:1}
-  code.copy{display:block;background:var(--panel2);padding:10px;border-radius:10px;word-break:break-all;font-size:14px;user-select:all;-webkit-user-select:all}
-  textarea{font:13px ui-monospace,monospace;width:100%;min-height:90px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
-  .goalslot{display:flex;align-items:center;gap:10px}
-  .tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px}
+  code.copy{display:block;background:var(--surface2);border:1px dashed var(--gold-lo);padding:12px;border-radius:12px;word-break:break-all;font-size:14px;color:var(--gold);user-select:all;-webkit-user-select:all}
+  textarea{font:13px ui-monospace,monospace;min-height:90px}
+  input[type=checkbox]{accent-color:var(--red);width:20px;height:20px}
 
-  #toast{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top));background:#f8fafc;color:#0f172a;
-    padding:12px 14px;border-radius:12px;font-size:15px;box-shadow:0 8px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(-20px);
-    transition:.2s;pointer-events:none;z-index:9}
+  /* ---------- setup ---------- */
+  .hero{text-align:center;padding:18px 0 8px}
+  .hero img{width:150px;height:150px;filter:drop-shadow(0 0 30px rgba(204,0,0,.5))}
+  .hero h1{font:700 34px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;margin:14px 0 6px}
+  .hero h1 span{color:var(--gold)}
+  .step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--gold);color:#140f00;font:700 13px/1 var(--display);margin-right:8px}
+
+  #toast{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top));background:#fafaf9;color:#111;
+    padding:13px 15px;border-radius:14px;font-size:15px;font-weight:500;box-shadow:0 12px 40px rgba(0,0,0,.55);opacity:0;transform:translateY(-20px);
+    transition:.2s;pointer-events:none;z-index:9;border-left:5px solid var(--gold)}
   #toast.show{opacity:1;transform:none}
-  #toast.err{background:#fee2e2;color:#7f1d1d}
+  #toast.err{border-left-color:var(--red)}
+
+  @media (max-height:700px){ .big{font-size:52px} .goal{font-size:25px} .pen{font-size:24px} .mini button{padding:12px 10px} }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
 </head>
 <body>
 
 <!-- SETUP / LOGIN -->
 <section id="setup" class="screen hidden">
-  <h1 style="margin:8px 0 4px">Rink Music</h1>
-  <p class="muted" style="margin-top:0">One-time setup. Takes about five minutes.</p>
-  <div class="card stack">
-    <p><b>Step 1.</b> In your Spotify developer app, add this exact Redirect URI:</p>
+  <div class="hero">
+    <img src="logo.png" alt="Flames logo">
+    <h1>Rink <span>Music</span></h1>
+    <p class="muted" style="margin:0">One-time setup. About five minutes.</p>
+  </div>
+  <div class="card stack" style="margin-top:14px">
+    <p style="margin:0"><span class="step">1</span>In your Spotify developer app, add this exact Redirect URI:</p>
     <code class="copy" id="redirectShow"></code>
-    <p style="margin:0"><b>Step 2.</b> Paste your app's Client ID here:</p>
+    <p style="margin:6px 0 0"><span class="step">2</span>Paste your app's Client ID:</p>
     <input id="clientIdInput" placeholder="Client ID (32 letters and numbers)" autocapitalize="off" autocorrect="off" spellcheck="false">
     <button class="btn" id="loginBtn">Connect Spotify</button>
   </div>
-  <p class="muted">Already set up on another screen? <a href="#" id="setupRestore" style="color:#93c5fd">Paste a backup</a> instead.</p>
+  <p class="muted" style="text-align:center">Already set up somewhere else? <a href="#" id="setupRestore">Paste a backup</a></p>
   <div id="setupRestoreBox" class="card stack hidden">
     <textarea id="setupRestoreText" placeholder="Paste backup text here"></textarea>
     <button class="btn" id="setupRestoreBtn">Restore</button>
@@ -111,23 +178,32 @@
 <!-- MAIN CONTROLLER -->
 <section id="main" class="screen hidden">
   <div class="top">
-    <div class="status" id="status"><span class="dot"></span>Starting…</div>
-    <button class="icon-btn" id="openLib">Songs &amp; settings</button>
+    <div class="brand">
+      <img src="logo.png" alt="Flames logo">
+      <div class="words">
+        <div class="title">Rink <span>Music</span></div>
+        <div class="status" id="status"><span class="dot"></span>Starting…</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="openLib" aria-label="Songs and settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+    </button>
   </div>
   <div class="now">
+    <div class="eq" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="t"><div class="n" id="nowName">Nothing playing</div><div class="a" id="nowArtist">&nbsp;</div></div>
-    <button class="mark" id="markBtn">Mark cue here</button>
+    <button class="mark" id="markBtn"><b>◆</b> Mark cue</button>
   </div>
   <div class="controls">
-    <button class="big" id="playBtn">PLAY<small>random stoppage song</small></button>
+    <button class="btn-xl big" id="playBtn"></button>
     <div class="row">
-      <button class="goal home" id="homeBtn">HOME<br>GOAL</button>
-      <button class="goal away" id="awayBtn">AWAY<br>GOAL</button>
+      <button class="btn-xl goal home" id="homeBtn"><small>Home</small>GOAL</button>
+      <button class="btn-xl goal away" id="awayBtn"><small>Away</small>GOAL</button>
     </div>
-    <button class="pen" id="penBtn">PENALTY</button>
+    <button class="btn-xl pen" id="penBtn">Penalty</button>
     <div class="mini">
-      <button id="skipBtn">Next song ⏭</button>
-      <button id="replayBtn">Restart at cue ↺</button>
+      <button id="skipBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z"/></svg>Next song</button>
+      <button id="replayBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Restart at cue</button>
     </div>
   </div>
 </section>
@@ -135,8 +211,10 @@
 <!-- LIBRARY / SETTINGS -->
 <section id="lib" class="screen hidden">
   <div class="top">
-    <button class="icon-btn" id="closeLib">← Back</button>
-    <div class="status" style="text-align:right">Songs &amp; settings</div>
+    <button class="back" id="closeLib">← Back</button>
+    <div class="brand" style="justify-content:flex-end">
+      <div class="title" style="font:700 18px/1 var(--display);letter-spacing:.06em;text-transform:uppercase">Songs &amp; Settings</div>
+    </div>
   </div>
   <div class="tabs" id="tabs">
     <button data-tab="stoppage" class="on">Stoppage</button>
@@ -147,7 +225,7 @@
   </div>
 
   <div id="tab-stoppage" class="tab">
-    <p class="muted">Play picks randomly from these. Cue = where the song starts (m:ss). Tap ▶ to hear it from the cue.</p>
+    <p class="muted">Play picks randomly from these. Cue is where the song starts (m:ss). Tap ▶ to hear it from the cue.</p>
     <div class="list" id="list-stoppage"></div>
   </div>
 
@@ -182,18 +260,18 @@
       <b>Speaker / device</b>
       <select id="deviceSelect"><option value="">Automatic (this phone)</option></select>
       <button class="btn sec" id="refreshDevices">Refresh device list</button>
-      <p class="muted" style="margin:0">If nothing shows up: open the Spotify app, play any song for a second, then come back and refresh.</p>
+      <p class="muted" style="margin:0">If nothing shows up, open the Spotify app, play any song for a second, then come back and refresh.</p>
     </div>
     <div class="card stack">
       <b>Stop button</b>
-      <label class="muted">Fade-out length (seconds). Only works on speakers that allow volume control; iPhones usually just pause.</label>
+      <label class="muted">Fade-out length. Only works on speakers that allow volume control; iPhones usually just pause.</label>
       <select id="fadeSelect"><option value="0">No fade</option><option value="1000">1 second</option><option value="1500">1.5 seconds</option><option value="2500">2.5 seconds</option></select>
-      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="wakeChk" style="width:auto"> Keep screen awake while open</label>
+      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="wakeChk"> Keep screen awake while open</label>
     </div>
     <div class="card stack">
       <b>Backup</b>
       <p class="muted" style="margin:0">Copies all your songs, cues and your login. Paste it into the home-screen app or a new phone to move everything over.</p>
-      <button class="btn sec" id="backupBtn">Copy backup</button>
+      <button class="btn gold" id="backupBtn">Copy backup</button>
       <textarea id="restoreText" placeholder="Paste backup text here to restore"></textarea>
       <button class="btn sec" id="restoreBtn">Restore from pasted backup</button>
     </div>
