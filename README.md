@@ -43,6 +43,7 @@ If you end up stuck on a Spotify or browser page after tapping Agree instead of 
 3. Clock stops → **PLAY**. Clock starts → **STOP**. That's it.
    - **HOME GOAL / AWAY GOAL** play their fixed song from its cue.
    - **PENALTY** rotates through the penalty songs.
+   - The small row (**Warm Up 1/2**, **Intermission 1/2**) plays one fixed song each: The Foggy Dew, For Whom the Bell Tolls, Immigrant Song and Cult of Personality.
    - **Next song** skips to a different random song; **Restart at cue** replays the current one from its start point.
    - Songs don't repeat until the whole pool has played.
 
@@ -61,7 +62,7 @@ Doing a quick pass at home before the first game is worth it: go through the lis
 
 ## Changing songs
 
-**Songs & settings → + Add songs.** Search for a song, then tap **+ Stoppage**, **+ Penalty**, **Home** or **Away**. Explicit versions are hidden automatically. If a song only shows up as explicit, try searching with "clean" added.
+**Songs & settings → + Add songs.** Search for a song, then tap **+ Stoppage** or **+ Penalty**, or use **Set as…** to make it the song for Home goal, Away goal, a Warm Up or an Intermission button. Explicit versions are hidden automatically. If a song only shows up as explicit, try searching with "clean" added.
 
 You can also paste a link to one of your own Spotify playlists and add the whole thing (explicit tracks get skipped). Remove songs with ✕.
 

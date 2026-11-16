@@ -77,7 +77,7 @@
 
   /* ---------- controls ---------- */
   #main{height:100vh;height:100dvh;min-height:0}
-  .controls{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1.7fr) minmax(0,1fr) minmax(0,.72fr) auto;gap:12px}
+  .controls{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1.7fr) minmax(0,1fr) minmax(0,.72fr) auto auto;gap:12px}
   .btn-xl{position:relative;border-radius:var(--r);font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;overflow:hidden;
     display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
   /* neon inline, borrowed from the logo lettering */
@@ -103,6 +103,12 @@
   .pen{font-size:28px;color:var(--gold);background:linear-gradient(180deg,#1c1705,#100d03);
     box-shadow:inset 0 0 0 1px rgba(255,200,5,.35),0 0 24px -8px rgba(255,200,5,.35);text-shadow:0 0 14px rgba(255,200,5,.55)}
   .pen::after{border-color:rgba(255,200,5,.55)}
+  .extras{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .extras button{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:9px 4px 10px;
+    font:700 22px/1 var(--display);color:var(--text);box-shadow:inset 0 -2px 0 rgba(255,200,5,.55)}
+  .extras button small{display:block;font:600 10.5px/1.1 var(--body);letter-spacing:.02em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;white-space:nowrap}
+  .extras button.int{box-shadow:inset 0 -2px 0 rgba(204,0,0,.8)}
+  .extras button.int small{color:#ff6b6b}
   .mini{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .mini button{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 10px;font-weight:600;font-size:15px;
     display:flex;align-items:center;justify-content:center;gap:8px}
@@ -123,7 +129,7 @@
   .item button{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13px;font-weight:600;white-space:nowrap}
   .item button[data-act=preview]{color:var(--gold)}
   .item .acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:56%}
-  .item .acts button[data-add=home]{background:var(--red);border-color:var(--red)}
+  .item .acts select{width:auto;padding:8px 10px;font-size:13px;font-weight:600;border-radius:10px;background:var(--red);border-color:var(--red);color:#fff}
   .muted{color:var(--muted);font-size:14px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
   .card p{margin:0 0 10px}
@@ -152,7 +158,7 @@
   #toast.show{opacity:1;transform:none}
   #toast.err{border-left-color:var(--red)}
 
-  @media (max-height:700px){ .big{font-size:52px} .goal{font-size:25px} .pen{font-size:24px} .mini button{padding:12px 10px} }
+  @media (max-height:700px){ .extras button{padding:7px 4px 8px;font-size:18px} .big{font-size:52px} .goal{font-size:25px} .pen{font-size:24px} .mini button{padding:12px 10px} }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
 </head>
@@ -206,6 +212,12 @@
       <button class="btn-xl goal away" id="awayBtn"><small>Away</small>GOAL</button>
     </div>
     <button class="btn-xl pen" id="penBtn">Penalty</button>
+    <div class="extras">
+      <button data-slot="warm1"><small>Warm Up</small>1</button>
+      <button data-slot="warm2"><small>Warm Up</small>2</button>
+      <button data-slot="int1" class="int"><small>Intermission</small>1</button>
+      <button data-slot="int2" class="int"><small>Intermission</small>2</button>
+    </div>
     <div class="mini">
       <button id="skipBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z"/></svg>Next song</button>
       <button id="replayBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Restart at cue</button>
@@ -224,7 +236,7 @@
   <div class="tabs" id="tabs">
     <button data-tab="stoppage" class="on">Stoppage</button>
     <button data-tab="penalty">Penalty</button>
-    <button data-tab="goals">Goals</button>
+    <button data-tab="goals">Buttons</button>
     <button data-tab="add">+ Add songs</button>
     <button data-tab="settings">Settings</button>
   </div>
@@ -240,9 +252,8 @@
   </div>
 
   <div id="tab-goals" class="tab hidden">
-    <h2>Home goal</h2><div class="list" id="goal-home"></div>
-    <h2>Away goal</h2><div class="list" id="goal-away"></div>
-    <p class="muted">To change a goal song, find it under "+ Add songs" and tap Home or Away.</p>
+    <p class="muted">Each of these buttons plays one song. To change one, search for the song under "+ Add songs" and pick the button from "Set as…".</p>
+    <div id="slots"></div>
   </div>
 
   <div id="tab-add" class="tab hidden">

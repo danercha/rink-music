@@ -6,6 +6,8 @@
   const KEY = "rinkmusic.v1";
   const SCOPES = "user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative";
   const API = "https://api.spotify.com/v1";
+  // One fixed song per button.
+  const SLOTS = { home: "Home goal", away: "Away goal", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2" };
   const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
 
   // ---------- state ----------
@@ -14,7 +16,7 @@
     tokens: null,                 // {access, refresh, exp}
     tracks: {},                   // id -> {id, uri, name, artist, durationMs, cueMs}
     pools: { stoppage: [], penalty: [] },
-    goals: { home: null, away: null },
+    goals: { home: null, away: null, warm1: null, warm2: null, int1: null, int2: null },
     settings: { fadeMs: 1500, deviceId: "", wake: true },
     penaltyIdx: 0,
     seeded: false,
@@ -23,7 +25,7 @@
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return Object.assign(blank(), JSON.parse(raw));
+      if (raw) { const o = Object.assign(blank(), JSON.parse(raw)); o.goals = Object.assign(blank().goals, o.goals); return o; }
     } catch (e) {}
     return blank();
   }
@@ -377,7 +379,7 @@
   }
   function onGoal(side) {
     const id = S.goals[side];
-    if (!id) { alertMsg(`No ${side} goal song is set. Pick one under Songs & settings → + Add songs.`); return; }
+    if (!id) { alertMsg(`No ${SLOTS[side]} song is set. Search for one under Songs & settings → + Add songs, then use "Set as…".`); return; }
     playTrack(id, side);
   }
   function onPenalty() {
@@ -443,10 +445,10 @@
     save(); return true;
   }
   function inUse(id) {
-    return S.pools.stoppage.includes(id) || S.pools.penalty.includes(id) || S.goals.home === id || S.goals.away === id;
+    return S.pools.stoppage.includes(id) || S.pools.penalty.includes(id) || Object.values(S.goals).includes(id);
   }
   function removeFrom(where, id) {
-    if (where === "home" || where === "away") S.goals[where] = null;
+    if (SLOTS[where]) S.goals[where] = null;
     else S.pools[where] = S.pools[where].filter((x) => x !== id);
     if (!inUse(id)) delete S.tracks[id];
     save(); renderLib();
@@ -466,10 +468,10 @@
       $("list-" + pool).innerHTML = ids.length ? ids.map((id) => rowHTML(S.tracks[id], pool)).join("")
         : `<p class="muted">Empty. Add songs under "+ Add songs".</p>`;
     }
-    for (const side of ["home", "away"]) {
-      const t = S.tracks[S.goals[side]];
-      $("goal-" + side).innerHTML = t ? rowHTML(t, side) : `<p class="muted">Not set.</p>`;
-    }
+    $("slots").innerHTML = Object.entries(SLOTS).map(([k, label]) => {
+      const t = S.tracks[S.goals[k]];
+      return `<h2>${esc(label)}</h2><div class="list">${t ? rowHTML(t, k) : `<p class="muted">Not set.</p>`}</div>`;
+    }).join("");
     $("clientIdShow").textContent = "Client ID: " + (S.clientId || "none");
     $("fadeSelect").value = String(S.settings.fadeMs);
     $("wakeChk").checked = !!S.settings.wake;
@@ -510,7 +512,7 @@
         <div class="t"><div>${esc(t.name)}</div><div class="a">${esc(t.artists.map((a) => a.name).join(", "))} · ${fmt(t.duration_ms)}</div></div>
         <div class="acts">
           <button data-add="stoppage">+ Stoppage</button><button data-add="penalty">+ Penalty</button>
-          <button data-add="home">Home</button><button data-add="away">Away</button>
+          <select data-set aria-label="Set as button song"><option value="">Set as…</option>${Object.entries(SLOTS).map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select>
         </div></div>`).join("") : `<p class="muted">No clean results.</p>`;
     } catch (e) { playError(e); }
   }
@@ -519,13 +521,18 @@
     if (!btn) return;
     const it = lastResults[+btn.closest(".item").dataset.i];
     const where = btn.dataset.add;
-    if (where === "home" || where === "away") {
-      addTrack(it); S.goals[where] = it.id; save();
-      toast(`"${it.name}" is now the ${where} goal song.`);
-    } else if (addToPool(where, it)) toast(`Added "${it.name}" to ${where === "stoppage" ? "Stoppage" : "Penalty"}.`);
+    if (addToPool(where, it)) toast(`Added "${it.name}" to ${where === "stoppage" ? "Stoppage" : "Penalty"}.`);
     renderLib();
   }
-
+  function onResultSet(e) {
+    const sel = e.target.closest("select[data-set]");
+    if (!sel || !sel.value) return;
+    const it = lastResults[+sel.closest(".item").dataset.i];
+    addTrack(it); S.goals[sel.value] = it.id; save();
+    toast(`"${it.name}" is now the ${SLOTS[sel.value]} song.`);
+    sel.value = "";
+    renderLib();
+  }
   async function importPlaylist(pool) {
     const m = $("plInput").value.match(/playlist[/:]([A-Za-z0-9]+)/);
     if (!m) { toast("Paste a Spotify playlist link.", true); return; }
@@ -555,13 +562,19 @@
 
   // ---------- starter songs ----------
   async function seed(force) {
-    if ((S.seeded && !force) || !window.STARTER_SONGS) return;
-    toast("Finding the starter songs on Spotify…", false, 20000);
+    if (!window.STARTER_SONGS) return;
+    // First run: everything. Later runs: only button songs added since (e.g. warm-up / intermission).
+    const list = (S.seeded && !force)
+      ? window.STARTER_SONGS.filter((x) => SLOTS[x.role] && x.role !== "home" && x.role !== "away" && !S.goals[x.role] && !(S.slotsTried || []).includes(x.role))
+      : window.STARTER_SONGS;
+    if (!list.length) return;
+    toast("Finding songs on Spotify…", false, 20000);
     let found = 0, missed = [];
-    for (const s of window.STARTER_SONGS) {
+    for (const s of list) {
       try {
-        const q = `track:"${s.title}" artist:"${s.artist}"`;
-        const j = await api("GET", "/search?type=track&limit=10&q=" + encodeURIComponent(q));
+        let j = await api("GET", "/search?type=track&limit=10&q=" + encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`));
+        if (!(j && j.tracks && j.tracks.items && j.tracks.items.length))
+          j = await api("GET", "/search?type=track&limit=10&q=" + encodeURIComponent(s.q || `${s.title} ${s.artist}`));
         const items = (j && j.tracks && j.tracks.items || []).filter(Boolean);
         const norm = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
         const want = norm(s.title);
@@ -571,7 +584,7 @@
         if (!it) { missed.push(s.title); continue; }
         const t = addTrack(it);
         if (!t.cueMs) t.cueMs = parseCue(s.cue) || 0;
-        if (s.role === "home" || s.role === "away") { if (!S.goals[s.role] || force) S.goals[s.role] = it.id; }
+        if (SLOTS[s.role]) { if (!S.goals[s.role] || force) S.goals[s.role] = it.id; }
         else if (!S.pools[s.role].includes(it.id)) S.pools[s.role].push(it.id);
         found++;
         await sleep(120); // be polite to the rate limit
@@ -580,8 +593,10 @@
         else missed.push(s.title);
       }
     }
-    S.seeded = true; save(); renderLib();
-    toast(`Loaded ${found} starter songs.` + (missed.length ? ` Couldn't find a clean version of: ${missed.join(", ")}.` : ""), false, 7000);
+    S.seeded = true;
+    S.slotsTried = Object.keys(SLOTS);
+    save(); renderLib();
+    toast(`Loaded ${found} song${found === 1 ? "" : "s"}.` + (missed.length ? ` Couldn't find a clean version of: ${missed.join(", ")}.` : ""), false, 7000);
   }
 
   // ---------- settings ----------
@@ -650,6 +665,7 @@
     $("playBtn").onclick = onPlay;
     $("homeBtn").onclick = () => onGoal("home");
     $("awayBtn").onclick = () => onGoal("away");
+    document.querySelectorAll("[data-slot]").forEach((b) => (b.onclick = () => onGoal(b.dataset.slot)));
     $("penBtn").onclick = onPenalty;
     $("skipBtn").onclick = onSkip;
     $("replayBtn").onclick = onReplay;
@@ -658,13 +674,14 @@
     $("closeLib").onclick = () => { show("main"); poll(); };
 
     $("tabs").onclick = (e) => { const b = e.target.closest("button[data-tab]"); if (b) tab(b.dataset.tab); };
-    for (const id of ["list-stoppage", "list-penalty", "goal-home", "goal-away"]) {
+    for (const id of ["list-stoppage", "list-penalty", "slots"]) {
       $(id).addEventListener("click", onLibClick);
       $(id).addEventListener("change", onCueChange);
     }
     $("searchBtn").onclick = search;
     $("searchInput").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
     $("searchResults").addEventListener("click", onResultClick);
+    $("searchResults").addEventListener("change", onResultSet);
     $("plStop").onclick = () => importPlaylist("stoppage");
     $("plPen").onclick = () => importPlaylist("penalty");
 
@@ -696,7 +713,7 @@
     wake();
     pickDevice().catch(() => setStatus(true));
     poll();
-    if (!S.seeded) seed(false);
+    seed(false);
   }
 
   bind();
