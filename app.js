@@ -7,7 +7,7 @@
   const SCOPES = "user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative";
   const API = "https://api.spotify.com/v1";
   // One fixed song per button.
-  const SLOTS = { home: "Home goal", away: "Away goal", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2" };
+  const SLOTS = { home: "Home goal", away: "Away goal", pre: "Pre Game", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2" };
   const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
 
   // ---------- state ----------
@@ -16,7 +16,7 @@
     tokens: null,                 // {access, refresh, exp}
     tracks: {},                   // id -> {id, uri, name, artist, durationMs, cueMs}
     pools: { stoppage: [], penalty: [] },
-    goals: { home: null, away: null, warm1: null, warm2: null, int1: null, int2: null },
+    goals: { home: null, away: null, pre: null, warm1: null, warm2: null, int1: null, int2: null },
     settings: { fadeMs: 1500, deviceId: "", wake: true },
     penaltyIdx: 0,
     seeded: false,

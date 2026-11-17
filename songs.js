@@ -4,14 +4,15 @@
 // You can also just add/remove songs inside the app; you never have to edit this file.
 //
 // role: "stoppage" (random Play pool), "penalty" (rotating), or a one-song button:
-//       "home", "away" (goals), "warm1", "warm2" (warm-up), "int1", "int2" (intermission)
+//       "home", "away" (goals), "pre" (pre-game), "warm1", "warm2" (warm-up), "int1", "int2" (intermission)
 
 window.STARTER_SONGS = [
   // Goal songs (one each)
   { role: "home",     title: "Song 2",                       artist: "Blur",               cue: "0:00" },
   { role: "away",     title: "Celebration",                  artist: "Kool & The Gang",    cue: "0:22" },
 
-  // Warm-up and intermission buttons (one each)
+  // Pre-game, warm-up and intermission buttons (one each)
+  { role: "pre",      title: "The Foggy Dew",                artist: "The Chieftains",     cue: "0:00", q: "Foggy Dew Chieftains Sinead O'Connor" },
   { role: "warm1",    title: "The Foggy Dew",                artist: "The Chieftains",     cue: "0:00", q: "Foggy Dew Chieftains Sinead O'Connor" },
   { role: "warm2",    title: "For Whom the Bell Tolls",      artist: "Metallica",          cue: "0:00" },
   { role: "int1",     title: "Immigrant Song",               artist: "Led Zeppelin",       cue: "0:00" },

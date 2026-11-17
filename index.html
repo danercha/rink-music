@@ -103,12 +103,14 @@
   .pen{font-size:28px;color:var(--gold);background:linear-gradient(180deg,#1c1705,#100d03);
     box-shadow:inset 0 0 0 1px rgba(255,200,5,.35),0 0 24px -8px rgba(255,200,5,.35);text-shadow:0 0 14px rgba(255,200,5,.55)}
   .pen::after{border-color:rgba(255,200,5,.55)}
-  .extras{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .extras button{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:9px 4px 10px;
+  .extras{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .extras button{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:9px 2px 10px;min-width:0;
     font:700 22px/1 var(--display);color:var(--text);box-shadow:inset 0 -2px 0 rgba(255,200,5,.55)}
-  .extras button small{display:block;font:600 10.5px/1.1 var(--body);letter-spacing:.02em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;white-space:nowrap}
+  .extras button small{display:block;font:600 11px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;white-space:nowrap}
+  .extras button.pre{font-size:18px;padding-top:10px;box-shadow:inset 0 -2px 0 rgba(255,255,255,.6)}
+  .extras button.pre small{color:#fff}
   .extras button.int{box-shadow:inset 0 -2px 0 rgba(204,0,0,.8)}
-  .extras button.int small{color:#ff6b6b}
+  .extras button.int small{color:#ff6b6b;font-size:10px;letter-spacing:0}
   .mini{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .mini button{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 10px;font-weight:600;font-size:15px;
     display:flex;align-items:center;justify-content:center;gap:8px}
@@ -158,7 +160,7 @@
   #toast.show{opacity:1;transform:none}
   #toast.err{border-left-color:var(--red)}
 
-  @media (max-height:700px){ .extras button{padding:7px 4px 8px;font-size:18px} .big{font-size:52px} .goal{font-size:25px} .pen{font-size:24px} .mini button{padding:12px 10px} }
+  @media (max-height:700px){ .extras button{padding:7px 2px 8px;font-size:18px} .extras button.pre{font-size:15px} .big{font-size:52px} .goal{font-size:25px} .pen{font-size:24px} .mini button{padding:12px 10px} }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
 </head>
@@ -213,6 +215,7 @@
     </div>
     <button class="btn-xl pen" id="penBtn">Penalty</button>
     <div class="extras">
+      <button data-slot="pre" class="pre"><small>Pre</small>GAME</button>
       <button data-slot="warm1"><small>Warm Up</small>1</button>
       <button data-slot="warm2"><small>Warm Up</small>2</button>
       <button data-slot="int1" class="int"><small>Intermission</small>1</button>
