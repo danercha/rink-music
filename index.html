@@ -132,6 +132,7 @@
   .item button[data-act=preview]{color:var(--gold)}
   .item .acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:56%}
   .item .acts select{width:auto;padding:8px 10px;font-size:13px;font-weight:600;border-radius:10px;background:var(--red);border-color:var(--red);color:#fff}
+  .ebadge{display:inline-block;font:700 10px/1 var(--body);background:#c4c4cc;color:#111;border-radius:3px;padding:2px 4px;vertical-align:2px;margin-left:4px}
   .muted{color:var(--muted);font-size:14px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
   .card p{margin:0 0 10px}
@@ -261,10 +262,10 @@
 
   <div id="tab-add" class="tab hidden">
     <div class="inline"><input id="searchInput" placeholder="Search Spotify (song, artist)" enterkeyhint="search"><button class="btn" id="searchBtn">Search</button></div>
-    <p class="muted" id="searchNote">Explicit songs are hidden automatically.</p>
+    <p class="muted" id="searchNote">Songs marked <span class="ebadge">E</span> are explicit.</p>
     <div class="list" id="searchResults"></div>
     <h2>Import a playlist</h2>
-    <p class="muted">Paste a Spotify playlist link (Share → Copy link). Explicit songs are skipped. Works with playlists you own.</p>
+    <p class="muted">Paste a Spotify playlist link (Share → Copy link). Works with playlists you own.</p>
     <div class="stack">
       <input id="plInput" placeholder="https://open.spotify.com/playlist/…" autocapitalize="off">
       <div class="inline">

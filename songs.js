@@ -1,5 +1,5 @@
 // Starter songs. The app looks each one up on Spotify the first time you sign in,
-// picks a clean (non-explicit) version, and sets the cue (where playback starts).
+// picks the best match, and sets the cue (where playback starts).
 // Cues are starting guesses: fix any of them in the app with "Mark cue here".
 // You can also just add/remove songs inside the app; you never have to edit this file.
 //

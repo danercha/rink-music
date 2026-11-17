@@ -401,7 +401,6 @@
       const p = await api("GET", "/me/player?additional_types=track");
       if (!p || !p.item) { toast("Nothing is playing in Spotify right now.", true); return; }
       const it = p.item;
-      if (it.explicit) toast("Heads up: this version is marked explicit.", true);
       let t = S.tracks[it.id];
       if (!t) {
         t = addTrack(it);
@@ -439,7 +438,6 @@
     return t;
   }
   function addToPool(pool, it) {
-    if (it.explicit) { toast("Skipped: explicit version.", true); return false; }
     addTrack(it);
     if (!S.pools[pool].includes(it.id)) S.pools[pool].push(it.id);
     save(); return true;
@@ -504,16 +502,13 @@
     try {
       const j = await api("GET", "/search?type=track&limit=10&q=" + encodeURIComponent(q));
       const items = (j && j.tracks && j.tracks.items || []).filter(Boolean);
-      const clean = items.filter((t) => !t.explicit);
-      lastResults = clean;
-      const hidden = items.length - clean.length;
-      $("searchNote").textContent = hidden ? `${hidden} explicit result${hidden > 1 ? "s" : ""} hidden. Try adding "clean" to your search if the song you want is missing.` : "Explicit songs are hidden automatically.";
-      $("searchResults").innerHTML = clean.length ? clean.map((t, i) => `<div class="item" data-i="${i}">
-        <div class="t"><div>${esc(t.name)}</div><div class="a">${esc(t.artists.map((a) => a.name).join(", "))} · ${fmt(t.duration_ms)}</div></div>
+      lastResults = items;
+      $("searchResults").innerHTML = items.length ? items.map((t, i) => `<div class="item" data-i="${i}">
+        <div class="t"><div>${esc(t.name)}${t.explicit ? '<span class="ebadge">E</span>' : ""}</div><div class="a">${esc(t.artists.map((a) => a.name).join(", "))} · ${fmt(t.duration_ms)}</div></div>
         <div class="acts">
           <button data-add="stoppage">+ Stoppage</button><button data-add="penalty">+ Penalty</button>
           <select data-set aria-label="Set as button song"><option value="">Set as…</option>${Object.entries(SLOTS).map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select>
-        </div></div>`).join("") : `<p class="muted">No clean results.</p>`;
+        </div></div>`).join("") : `<p class="muted">No results.</p>`;
     } catch (e) { playError(e); }
   }
   function onResultClick(e) {
@@ -536,7 +531,7 @@
   async function importPlaylist(pool) {
     const m = $("plInput").value.match(/playlist[/:]([A-Za-z0-9]+)/);
     if (!m) { toast("Paste a Spotify playlist link.", true); return; }
-    let added = 0, skipped = 0;
+    let added = 0;
     try {
       // Spotify renamed /tracks to /items for newer apps; try both.
       let url = null;
@@ -548,13 +543,12 @@
         for (const row of j.items || []) {
           const it = row.track || row.item;
           if (!it || it.type !== "track" || !it.id) continue;
-          if (it.explicit) { skipped++; continue; }
           if (!S.pools[pool].includes(it.id)) { addTrack(it); S.pools[pool].push(it.id); added++; }
         }
         url = j.next;
       }
       save(); renderLib();
-      toast(`Added ${added} songs.` + (skipped ? ` Skipped ${skipped} explicit.` : ""), false, 5000);
+      toast(`Added ${added} songs.`, false, 5000);
     } catch (e) {
       toast(e.status === 403 || e.status === 404 ? "Spotify won't share that playlist with this app. Use a playlist you created, or add songs by search." : e.message, true, 7000);
     }
@@ -578,9 +572,9 @@
         const items = (j && j.tracks && j.tracks.items || []).filter(Boolean);
         const norm = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
         const want = norm(s.title);
-        const it = items.find((t) => !t.explicit && norm(t.name).startsWith(want) && !/live|remix|karaoke|instrumental/i.test(t.name))
-          || items.find((t) => !t.explicit && norm(t.name).includes(want))
-          || items.find((t) => !t.explicit);
+        const it = items.find((t) => norm(t.name).startsWith(want) && !/live|remix|karaoke|instrumental/i.test(t.name))
+          || items.find((t) => norm(t.name).includes(want))
+          || items[0];
         if (!it) { missed.push(s.title); continue; }
         const t = addTrack(it);
         if (!t.cueMs) t.cueMs = parseCue(s.cue) || 0;
@@ -596,7 +590,7 @@
     S.seeded = true;
     S.slotsTried = Object.keys(SLOTS);
     save(); renderLib();
-    toast(`Loaded ${found} song${found === 1 ? "" : "s"}.` + (missed.length ? ` Couldn't find a clean version of: ${missed.join(", ")}.` : ""), false, 7000);
+    toast(`Loaded ${found} song${found === 1 ? "" : "s"}.` + (missed.length ? ` Couldn't find: ${missed.join(", ")}.` : ""), false, 7000);
   }
 
   // ---------- settings ----------

@@ -30,7 +30,7 @@ The app files are already in https://github.com/danercha/rink-music.
 1. On your iPhone, open **Safari** and go to `https://danercha.github.io/rink-music/`.
 2. Tap **Share** (square with arrow) → **Add to Home Screen** → **Add**. Open **Rink Music** from your home screen from now on.
 3. Paste the Client ID, tap **Connect Spotify**, then **Agree**.
-4. You land on the controller. It spends about 20 seconds finding the starter songs on Spotify (clean versions only).
+4. You land on the controller. It spends about 20 seconds finding the starter songs on Spotify
 
 If you end up stuck on a Spotify or browser page after tapping Agree instead of back in the app: do the sign-in in plain Safari instead. In Safari, go to **Songs & settings → Settings → Copy backup**, then open the home-screen app, tap **Paste a backup** on its setup screen, paste and tap **Restore**. (Or just use it in Safari; it works the same.)
 
@@ -62,9 +62,9 @@ Doing a quick pass at home before the first game is worth it: go through the lis
 
 ## Changing songs
 
-**Songs & settings → + Add songs.** Search for a song, then tap **+ Stoppage** or **+ Penalty**, or use **Set as…** to make it the song for Home goal, Away goal, Pre Game, a Warm Up or an Intermission button. Explicit versions are hidden automatically. If a song only shows up as explicit, try searching with "clean" added.
+**Songs & settings → + Add songs.** Search for a song, then tap **+ Stoppage** or **+ Penalty**, or use **Set as…** to make it the song for Home goal, Away goal, Pre Game, a Warm Up or an Intermission button. Explicit songs show an **E** badge in search results so you can spot them.
 
-You can also paste a link to one of your own Spotify playlists and add the whole thing (explicit tracks get skipped). Remove songs with ✕.
+You can also paste a link to one of your own Spotify playlists and add the whole thing. Remove songs with ✕.
 
 ## Back up your songs and cues
 
