@@ -4,19 +4,20 @@
 // You can also just add/remove songs inside the app; you never have to edit this file.
 //
 // role: "stoppage" (random Play pool), "penalty" (rotating), or a one-song button:
-//       "home", "away" (goals), "pre" (pre-game), "warm1", "warm2" (warm-up), "int1", "int2" (intermission)
+//       "home", "away" (goals), "pre" (pre-game), "warm1", "warm2" (warm-up), "int1", "int2" (intermission), "post" (post-game)
 
 window.STARTER_SONGS = [
   // Goal songs (one each)
   { role: "home",     title: "Song 2",                       artist: "Blur",               cue: "0:00" },
   { role: "away",     title: "Celebration",                  artist: "Kool & The Gang",    cue: "0:22" },
 
-  // Pre-game, warm-up and intermission buttons (one each)
+  // Pre-game, warm-up, intermission and post-game buttons (one each)
   { role: "pre",      title: "The Foggy Dew",                artist: "The Chieftains",     cue: "0:00", q: "Foggy Dew Chieftains Sinead O'Connor" },
   { role: "warm1",    title: "The Foggy Dew",                artist: "The Chieftains",     cue: "0:00", q: "Foggy Dew Chieftains Sinead O'Connor" },
   { role: "warm2",    title: "For Whom the Bell Tolls",      artist: "Metallica",          cue: "0:00" },
   { role: "int1",     title: "Immigrant Song",               artist: "Led Zeppelin",       cue: "0:00" },
   { role: "int2",     title: "Cult of Personality",          artist: "Living Colour",      cue: "0:00" },
+  { role: "post",     title: "Can I Kick It?",               artist: "A Tribe Called Quest", cue: "0:00" },
 
   // Penalty songs (rotate)
   { role: "penalty",  title: "Bad to the Bone",              artist: "George Thorogood",   cue: "0:00" },

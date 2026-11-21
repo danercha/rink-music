@@ -7,7 +7,7 @@
   const SCOPES = "user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative";
   const API = "https://api.spotify.com/v1";
   // One fixed song per button.
-  const SLOTS = { home: "Home goal", away: "Away goal", pre: "Pre Game", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2" };
+  const SLOTS = { home: "Home goal", away: "Away goal", pre: "Pre Game", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2", post: "Post Game" };
   const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
 
   // ---------- state ----------
@@ -16,7 +16,7 @@
     tokens: null,                 // {access, refresh, exp}
     tracks: {},                   // id -> {id, uri, name, artist, durationMs, cueMs}
     pools: { stoppage: [], penalty: [] },
-    goals: { home: null, away: null, pre: null, warm1: null, warm2: null, int1: null, int2: null },
+    goals: { home: null, away: null, pre: null, warm1: null, warm2: null, int1: null, int2: null, post: null },
     settings: { fadeMs: 1500, deviceId: "", wake: true, keepAwake: true, silence: null },
     penaltyIdx: 0,
     seeded: false,
@@ -419,7 +419,7 @@
   function setPlayBtn() {
     const b = $("playBtn");
     document.body.classList.toggle("playing", isPlaying);
-    if (isPlaying) { b.classList.add("stop"); b.innerHTML = ICON_STOP + "Stop<span class=\"sub\">" + (S.settings.fadeMs > 0 && device && device.supports_volume ? "fade out" : "pause the music") + "</span>"; }
+    if (isPlaying) { b.classList.add("stop"); b.innerHTML = ICON_STOP + "Stop<span class=\"sub\">" + (S.settings.fadeMs > 0 && device && device.supports_volume ? "fade out" : "stop the music") + "</span>"; }
     else { b.classList.remove("stop"); b.innerHTML = ICON_PLAY + "Play<span class=\"sub\">random stoppage song</span>"; }
   }
   function showNow(t) {

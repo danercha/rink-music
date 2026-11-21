@@ -1,5 +1,5 @@
 // Keeps the app shell cached so it opens instantly. Spotify calls always go to the network.
-const CACHE = "rinkmusic-v9";
+const CACHE = "rinkmusic-v10";
 const SHELL = ["./", "index.html", "app.js", "songs.js", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png", "logo.png", "fonts/oswald-latin-600-normal.woff2", "fonts/oswald-latin-700-normal.woff2"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
