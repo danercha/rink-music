@@ -91,3 +91,7 @@ Everything is saved on your phone only. After you've set up cues, go to **Settin
 ## Editing the starter list (optional)
 
 `songs.js` holds the starter songs. You never need to edit it: adding and removing songs in the app is easier. If you do edit it on GitHub, use **Settings → Re-add the starter songs** in the app afterwards.
+
+## Getting updates
+
+The app checks for a new version every time you open it. If you ever still see an old version, go to **Songs & settings → Settings → Get the latest version**. Your songs, cues and login are kept. The version number is shown just under that button.

@@ -8,6 +8,7 @@
   const API = "https://api.spotify.com/v1";
   // One fixed song per button.
   const SLOTS = { home: "Home goal", away: "Away goal", pre: "Pre Game", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2", post: "Post Game" };
+  const APP_VERSION = "12";
   const IS_IPAD = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const DEV = IS_IPAD ? "iPad" : "phone";
   const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
@@ -784,6 +785,8 @@
     $("restoreBtn").onclick = () => restore($("restoreText").value);
     $("reseedBtn").onclick = () => seed(true);
     $("logoutBtn").onclick = () => { S.tokens = null; save(); boot(); };
+    $("updateBtn").onclick = forceUpdate;
+    $("versionShow").textContent = "App version " + APP_VERSION;
     $("resetBtn").onclick = () => { if (confirm(`Erase all songs, cues and login from this ${DEV}?`)) { localStorage.removeItem(KEY); S = blank(); boot(); } };
 
     document.addEventListener("visibilitychange", () => { if (!document.hidden) { wake(); device = null; poll(); } });
@@ -804,5 +807,26 @@
 
   bind();
   handleRedirect().catch((e) => toast(e.message, true)).finally(boot);
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  // Updates: check for a new version whenever the app is opened or brought back, and when a new
+  // version takes over, reload once so its code actually runs.
+  if ("serviceWorker" in navigator) {
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController || reloading) return;
+      reloading = true; location.reload();
+    });
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
+      reg.update().catch(() => {});
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch(() => {});
+  }
+  async function forceUpdate() {
+    toast("Updating…");
+    try {
+      if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+      if (window.caches) for (const k of await caches.keys()) await caches.delete(k);
+    } catch (e) {}
+    location.replace(REDIRECT + "?v=" + Date.now());
+  }
 })();
