@@ -72,6 +72,8 @@
   .mark b{color:var(--gold)}
 
   .alert{background:#2a0505;border:1px solid var(--red-hi);color:#ffd9d9;border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:14.5px;line-height:1.4;box-shadow:0 0 24px -6px rgba(255,42,42,.6)}
+  .alert-open{display:table;margin-top:10px;background:#1ed760;color:#06140a;font-weight:700;text-decoration:none;padding:9px 14px;border-radius:999px;font-size:14px}
+  .alert-open.hidden{display:none}
   .alert em{display:block;font-style:normal;font-size:12px;color:#ff9a9a;margin-top:6px}
   .diag{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;font:12.5px/1.45 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;margin:0}
 
@@ -202,7 +204,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
   </div>
-  <div id="alert" class="alert hidden" role="alert"><span></span><em>Tap to dismiss</em></div>
+  <div id="alert" class="alert hidden" role="alert"><span></span><a class="alert-open hidden" href="spotify:">Open Spotify</a><em>Tap to dismiss</em></div>
   <div class="now">
     <div class="eq" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="t"><div class="n" id="nowName">Nothing playing</div><div class="a" id="nowArtist">&nbsp;</div></div>
@@ -289,6 +291,16 @@
       <label class="muted">Fade-out length. Only works on speakers that allow volume control; iPhones usually just pause.</label>
       <select id="fadeSelect"><option value="0">No fade</option><option value="1000">1 second</option><option value="1500">1.5 seconds</option><option value="2500">2.5 seconds</option></select>
       <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="wakeChk"> Keep screen awake while open</label>
+    </div>
+    <div class="card stack">
+      <b>Keep Spotify awake</b>
+      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="keepAwakeChk"> Play silence instead of pausing</label>
+      <p class="muted" style="margin:0">Your iPhone puts Spotify to sleep a few minutes after music pauses, and then this app can't reach it. With this on, Stop switches to a silent track so Spotify stays awake between whistles.</p>
+      <p class="muted" style="margin:0" id="silenceShow"></p>
+      <div class="inline">
+        <button class="btn sec" id="testSilenceBtn" style="flex:1">Test</button>
+        <button class="btn sec" id="findSilenceBtn" style="flex:1">Find another</button>
+      </div>
     </div>
     <div class="card stack">
       <b>Backup</b>
