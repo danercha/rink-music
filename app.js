@@ -8,6 +8,8 @@
   const API = "https://api.spotify.com/v1";
   // One fixed song per button.
   const SLOTS = { home: "Home goal", away: "Away goal", pre: "Pre Game", warm1: "Warm Up 1", warm2: "Warm Up 2", int1: "Intermission 1", int2: "Intermission 2", post: "Post Game" };
+  const IS_IPAD = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const DEV = IS_IPAD ? "iPad" : "phone";
   const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
 
   // ---------- state ----------
@@ -145,14 +147,22 @@
     return (j && j.devices) || [];
   }
   let deviceAt = 0;
+  // Prefer the Spotify on the device this app is running on: an iPad shows up in Spotify as a
+  // "Tablet", an iPhone as a "Smartphone". Newer iPads report themselves as a Mac with touch.
+  function pickFrom(list) {
+    const own = IS_IPAD ? /tablet/i : /smartphone/i, handheld = /smartphone|tablet/i;
+    return (S.settings.deviceId && list.find((x) => x.id === S.settings.deviceId))
+      || list.find((x) => own.test(x.type) && x.is_active)
+      || list.find((x) => own.test(x.type))
+      || list.find((x) => handheld.test(x.type) && x.is_active)
+      || list.find((x) => handheld.test(x.type))
+      || list.find((x) => x.is_active)
+      || list[0] || null;
+  }
   async function pickDevice() {
     const list = await getDevices();
     lastDevices = list;
-    let d = (S.settings.deviceId && list.find((x) => x.id === S.settings.deviceId))
-      || list.find((x) => /smartphone/i.test(x.type) && x.is_active)
-      || list.find((x) => /smartphone/i.test(x.type))
-      || list.find((x) => x.is_active)
-      || list[0] || null;
+    let d = pickFrom(list);
     device = d ? Object.assign({}, d) : null;
     deviceAt = Date.now();
     setStatus(!d);
@@ -270,7 +280,7 @@
       alertMsg(`Asked Spotify for "${t.name}" but it's playing "${lastProblem.state.track}". In the Spotify app, turn off Shuffle (the crossed-arrows button), then try again.`);
       return;
     }
-    alertMsg(`Spotify took the command but nothing is playing on "${d.name}". It has probably gone to sleep. Tap Open Spotify, press play on any song, come back and press Play again. Also check your phone volume.`, true);
+    alertMsg(`Spotify took the command but nothing is playing on "${d.name}". It has probably gone to sleep. Tap Open Spotify, press play on any song, come back and press Play again. Also check your ${DEV} volume.`, true);
   }
   let lastProblem = null;
   async function queueFollowUps(seq, d, uris) {
@@ -284,7 +294,7 @@
   function playError(e) {
     lastProblem = { when: new Date().toLocaleTimeString(), error: e.message, status: e.status, reason: e.reason };
     if (e.noDevice || e.reason === "NO_ACTIVE_DEVICE" || e.status === 404) {
-      alertMsg("Spotify on your phone has gone to sleep. Tap Open Spotify, press play on any song, then come back and press Play again.", true);
+      alertMsg(`Spotify on your ${DEV} has gone to sleep. Tap Open Spotify, press play on any song, then come back and press Play again.`, true);
     } else if (e.reason === "PREMIUM_REQUIRED" || e.status === 403) {
       alertMsg("Spotify refused to play: " + e.message + (e.reason ? " (" + e.reason + ")" : "") + ". Make sure you're signed in with your Premium account.");
     } else if (e.status === 429) {
@@ -380,10 +390,10 @@
     if (Date.now() - lastCmdAt < 8000) return;
     try {
       const list = await getDevices();
-      const phone = list.find((x) => device && x.id === device.id) || list.find((x) => /smartphone/i.test(x.type));
+      const phone = list.find((x) => device && x.id === device.id) || pickFrom(list.filter((x) => /smartphone|tablet/i.test(x.type) || x.id === S.settings.deviceId));
       if (!phone) {
         device = null; setStatus(true);
-        if (usedThisSession) alertMsg("Spotify on your phone has gone to sleep. Tap Open Spotify, press play on any song, then come back.", true);
+        if (usedThisSession) alertMsg(`Spotify on your ${DEV} has gone to sleep. Tap Open Spotify, press play on any song, then come back.`, true);
         return;
       }
       if (!usedThisSession || !S.settings.keepAwake || !S.settings.silence) return;
@@ -430,7 +440,7 @@
     const el = $("status");
     if (!el) return;
     if (device) el.innerHTML = `<span class="dot ${bad ? "bad" : "ok"}"></span>Playing on <b>${esc(device.name)}</b>`;
-    else el.innerHTML = `<span class="dot ${bad ? "bad" : ""}"></span>${bad ? "Open Spotify on your phone" : "Ready"}`;
+    else el.innerHTML = `<span class="dot ${bad ? "bad" : ""}"></span>${bad ? "Open Spotify on your " + DEV : "Ready"}`;
   }
 
   async function onPlay() {
@@ -672,7 +682,7 @@
     try {
       const list = await getDevices();
       const sel = $("deviceSelect");
-      sel.innerHTML = `<option value="">Automatic (this phone)</option>` + list.map((d) => `<option value="${esc(d.id)}">${esc(d.name)} (${esc(d.type)}${d.supports_volume ? "" : ", no volume control"})</option>`).join("");
+      sel.innerHTML = `<option value="">Automatic (this ${DEV})</option>` + list.map((d) => `<option value="${esc(d.id)}">${esc(d.name)} (${esc(d.type)}${d.supports_volume ? "" : ", no volume control"})</option>`).join("");
       sel.value = list.some((d) => d.id === S.settings.deviceId) ? S.settings.deviceId : "";
       if (!list.length) toast("No devices. Open the Spotify app, play a song for a second, then refresh.", true, 6000);
     } catch (e) { playError(e); }
@@ -685,7 +695,7 @@
     try {
       const list = await getDevices();
       lines.push("Spotify devices I can see:");
-      if (!list.length) lines.push("  (none — open the Spotify app on your phone and play something)");
+      if (!list.length) lines.push(`  (none — open the Spotify app on your ${DEV} and play something)`);
       list.forEach((d) => lines.push(`  ${d.is_active ? "▶" : "•"} ${d.name} [${d.type}]${d.is_restricted ? " RESTRICTED" : ""}${d.supports_volume ? "" : " no-volume"}`));
       const p = await api("GET", "/me/player?additional_types=track");
       lines.push("", "Spotify right now:");
@@ -774,7 +784,7 @@
     $("restoreBtn").onclick = () => restore($("restoreText").value);
     $("reseedBtn").onclick = () => seed(true);
     $("logoutBtn").onclick = () => { S.tokens = null; save(); boot(); };
-    $("resetBtn").onclick = () => { if (confirm("Erase all songs, cues and login from this phone?")) { localStorage.removeItem(KEY); S = blank(); boot(); } };
+    $("resetBtn").onclick = () => { if (confirm(`Erase all songs, cues and login from this ${DEV}?`)) { localStorage.removeItem(KEY); S = blank(); boot(); } };
 
     document.addEventListener("visibilitychange", () => { if (!document.hidden) { wake(); device = null; poll(); } });
     setInterval(poll, 5000);

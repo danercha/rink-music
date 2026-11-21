@@ -1,6 +1,6 @@
 # Rink Music — setup guide
 
-A one-screen Spotify remote for the scorekeeper's table: a big **Play/Stop** button, **Home Goal**, **Away Goal** and **Penalty** buttons, and every song starts at the good part instead of the intro. It controls the Spotify app on your iPhone, so you need Spotify Premium (you have it) and Wi-Fi.
+A one-screen Spotify remote for the scorekeeper's table: a big **Play/Stop** button, **Home Goal**, **Away Goal** and **Penalty** buttons, and every song starts at the good part instead of the intro. It controls the Spotify app on your iPad or iPhone, so you need Spotify Premium (you have it) and Wi-Fi.
 
 Setup takes about 10 minutes, once. You'll do three things: turn on the free GitHub Pages site, register the app with Spotify, then sign in on your phone. Do steps 1 and 2 on a computer; it's easier.
 
@@ -47,7 +47,7 @@ If you end up stuck on a Spotify or browser page after tapping Agree instead of 
    - **Next song** skips to a different random song; **Restart at cue** replays the current one from its start point.
    - Songs don't repeat until the whole pool has played.
 
-**Keeping Spotify awake.** iPhones put the Spotify app to sleep a few minutes after its music is paused, and a sleeping Spotify can't be controlled by this app. So when you press **STOP**, the app doesn't pause Spotify. It switches to a silent track on repeat. The rink hears nothing, Spotify stays awake, and the next button press works even after a long gap. The top card says "Standing by" while that's happening. You can turn this off or test the silent track under **Settings → Keep Spotify awake**.
+**Keeping Spotify awake.** iPads and iPhones put the Spotify app to sleep a few minutes after its music is paused, and a sleeping Spotify can't be controlled by this app. So when you press **STOP**, the app doesn't pause Spotify. It switches to a silent track on repeat. The rink hears nothing, Spotify stays awake, and the next button press works even after a long gap. The top card says "Standing by" while that's happening. You can turn this off or test the silent track under **Settings → Keep Spotify awake**.
 
 If Spotify does fall asleep anyway (Low Power Mode, a phone call, or you swiped Spotify away), a red message with an **Open Spotify** button appears. Tap it, press play on anything in Spotify, then come back. The app checks every 30 seconds, so you usually find out before you need the music.
 
